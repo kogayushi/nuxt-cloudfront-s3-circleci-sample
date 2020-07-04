@@ -1,3 +1,5 @@
+require("dotenv").config();
+const { ENVIRONMENT } = process.env;
 
 export default {
   mode: 'spa',
@@ -50,5 +52,8 @@ export default {
     */
     extend (config, ctx) {
     }
+  },
+  env: {
+    ENVIRONMENT
   }
 }
