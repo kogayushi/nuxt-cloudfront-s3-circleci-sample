@@ -88,3 +88,6 @@ sw.*
 
 # Vim swap files
 *.swp
+
+# project originals
+.awspublish-nuxt-cloudfront-s3-circleci-sample-*
