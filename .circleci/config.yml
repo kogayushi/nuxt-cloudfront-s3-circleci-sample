@@ -1,0 +1,87 @@
+version: 2
+jobs:
+  test:
+    docker:
+      - image: circleci/node:12.16.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - yarn-{{ checksum "package.json" }}
+      - run: yarn install
+      - save_cache:
+          paths:
+            - node_modules
+          key: yarn-{{ checksum "package.json" }}
+  # 実際にlistやtestを実行する場合はここに定義する
+  #      - run: yarn lint
+  #      - run: yarn test
+  deploy-development:
+    docker:
+      - image: circleci/node:12.16.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - yarn-{{ checksum "package.json" }}
+      - run: mv ./dotenv/.env.development ./.env
+      - run: ./deploy.sh
+  deploy-staging:
+    docker:
+      - image: circleci/node:12.16.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - yarn-{{ checksum "package.json" }}
+      - run: mv ./dotenv/.env.staging ./.env
+      - run: ./deploy.sh
+  deploy-production:
+    docker:
+      - image: circleci/node:12.16.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - yarn-{{ checksum "package.json" }}
+      - run: mv ./dotenv/.env.production ./.env
+      - run: ./deploy.sh
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test:
+          filters:
+            branches:
+              ignore:
+                - develop
+                - staging
+                - master
+  deploy:
+    jobs:
+      - deploy-development:
+          filters:
+            branches:
+              only:
+                - develop
+      - deploy-staging:
+          filters:
+            branches:
+              only:
+                - staging
+      - hold:
+          type: approval
+          filters:
+            tags:
+              only: /^release-.*/
+            branches:
+              ignore: /.*/
+      - deploy-production:
+          requires:
+            - hold
+          filters:
+            tags:
+              only: /^release-.*/
+            branches:
+              ignore: /.*/
